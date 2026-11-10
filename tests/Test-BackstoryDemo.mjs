@@ -87,7 +87,11 @@ try {
   const nav = action => act(action, null, '#navigation');
   const selectRole = async role => { await act('demo', null, '#topbar'); await act('switch-role', role, '#dialog'); };
   const find = async question => { await change('#find-form input', question); await submit('#find-form'); };
-  const ask = async question => { await change('#ask-form input', question); await submit('#ask-form'); };
+  const ask = async question => {
+    if (!(await evaluate('Boolean(document.querySelector("#ask-form"))'))) await act('story-tab', 'ask');
+    await change('#ask-form input', question);
+    await submit('#ask-form');
+  };
   const openMayaStory = () => act('open-story', 'solo');
   const sendLatestQuestion = async () => {
     await act('confirm-ask', null, '#story-messages .message:last-child');
@@ -118,7 +122,12 @@ try {
   // AC-01 to AC-03: all topics, cross-circle matching, manual follow, and fallback states.
   for (const topic of ['gaming', 'life', 'travel', 'work', 'hobbies', 'relationships']) {
     await act('circle', topic);
-    assert.ok(await evaluate('document.querySelectorAll("#screen .story-card").length >= 1'), `${topic} has a story`);
+    assert.ok(await evaluate('document.querySelectorAll("#screen .story-card").length >= 3'), `${topic} has at least three stories`);
+    await click('#screen .story-card');
+    await hasText('Human post');
+    await hasText('Human comment', '#discussion');
+    await hasText('AI reply', '#discussion');
+    await hasText('Human · Author', '#discussion');
     await nav('explore');
   }
   await find('I’m too tired for ranked games after work, but I still want to play with friends.');
@@ -142,6 +151,20 @@ try {
 
   // AC-06 to AC-09: original audio, partial answers, retry, privacy, and duplicate sends.
   await openMayaStory();
+  await screenshot('backstory-discussion');
+  await act('comment-reply', 'solo-sample-comment');
+  await hasText('Replying to Nia');
+  const publicComment = 'I tried that on my first night too. <em>It helped.</em>';
+  await change('#comment-form input', publicComment);
+  await submit('#comment-form');
+  await hasText(publicComment, '#discussion .comment-replies');
+  assert.equal(await evaluate('document.querySelectorAll("#discussion em").length'), 0, 'Public comments escape markup');
+  await selectRole('guest');
+  await hasText(publicComment, '#discussion');
+  assert.equal(await evaluate('Boolean(document.querySelector("#comment-form"))'), false, 'Guest can read public comments');
+  await cdp('Page.reload');
+  await hasText(publicComment, '#discussion');
+  await selectRole('alex');
   await act('copy-link', 'solo');
   const storyLink = await evaluate('document.querySelector("#story-link").value');
   assert.equal(new URL(storyLink).hash, '#story=solo');
@@ -253,6 +276,7 @@ try {
 
   // AC-04, AC-05, AC-13, and the withdrawal part of AC-01.
   await nav('share');
+  await screenshot('backstory-composer');
   await act('record', 'story');
   await hasText('Recording…');
   await delay(350);
@@ -281,6 +305,7 @@ try {
   await click('#source-form input[value="solo-1"]');
   await submit('#source-form');
   await selectRole('alex');
+  await act('story-tab', 'ask');
   await hasText('Source access was withdrawn');
   await ask('When did it feel hardest?');
   await hasText('doesn’t cover this question yet', '#story-messages .message:last-child');
@@ -294,10 +319,30 @@ try {
   await act('confirm-reset', null, '#dialog');
   await act('confirm', null, '#dialog');
   await hasText('What are you curious about?');
-  assert.deepEqual(await evaluate('[state.role, state.questions.length, state.stories.length]'), ['alex', 0, 6]);
+  assert.deepEqual(await evaluate('[state.role, state.questions.length, state.stories.length, state.comments.length]'), ['alex', 0, 18, 0]);
+
+  // AC-14 and AC-15: original demo state receives new content without losing old permissions.
+  await evaluate(`{
+    const old = freshState();
+    old.stories = structuredClone(originalStories);
+    old.stories[0].sources[1].enabled = false;
+    old.stories.find(story => story.id === 'first-job').withdrawn = true;
+    old.follows = { alex: ['gaming'], maya: [] };
+    delete old.comments;
+    localStorage.setItem(legacyStorageKey, JSON.stringify(old));
+    localStorage.removeItem(storageKey);
+  }`);
+  await cdp('Page.reload');
+  await hasText('Your circles');
+  assert.equal(await evaluate('state.stories.length'), 18);
+  assert.equal(await evaluate('Boolean(getStory("first-job"))'), false);
+  await openMayaStory();
+  await hasText('Source access was withdrawn', '#discussion .twin');
+  assert.equal(await evaluate('Boolean(document.querySelector("#discussion .twin [data-action=play-source]"))'), false);
   assert.deepEqual(runtimeErrors, [], 'No uncaught browser errors');
   console.log('PASS AC-04, AC-05, AC-13: recording and fallback, revocation, withdrawal, and reset');
-  console.log('All 13 Backstory demo acceptance cases passed.');
+  console.log('PASS AC-14 and AC-15: public roles, nested comments, revoked quotes, and previous demo data');
+  console.log('All 15 Backstory demo acceptance cases passed.');
 } finally {
   socket?.close();
   browser.kill();
