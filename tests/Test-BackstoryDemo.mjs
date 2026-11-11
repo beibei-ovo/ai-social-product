@@ -500,11 +500,46 @@ try {
   assert.equal(await evaluate('getDraft().images.length'), 3);
   await cdp('Page.reload');
   await waitFor('document.querySelectorAll("#share-form .photo-edit").length === 3');
+
+  // AC-20 and AC-21: photo feed, profile navigation, and participant-only direct messages.
+  await nav('explore');
+  assert.ok(await evaluate('document.querySelectorAll("#screen .story-card").length >= 18'));
+  assert.ok(await evaluate('Array.from(document.querySelectorAll("#screen .story-card")).every(card => card.querySelector("img"))'));
+  await screenshot('backstory-photo-feed');
+  await find('I want to play games with friends.');
+  await hasText('Stories for your question');
+  assert.ok(await evaluate('document.querySelectorAll("#search-results .story-card img").length >= 1'));
+  await openMayaStory();
+  await act('profile', 'maya');
+  await hasText('Maya Chen');
+  await hasText('Published stories');
+  await act('start-dm', 'maya');
+  const directId = await evaluate('page.id');
+  await change('#dm-form input', 'Hi Maya, I wanted to ask about your drawing routine.');
+  await submit('#dm-form');
+  await selectRole('maya');
+  await hasText('Hi Maya, I wanted to ask about your drawing routine.', '#direct-messages');
+  assert.equal(await evaluate('state.dms.find(item => item.id === page.id).unread.includes(state.role)'), false);
+  await change('#dm-form input', 'Hi Alex! I’m still drawing for a few minutes every morning.');
+  await submit('#dm-form');
+  await selectRole('alex');
+  await hasText('Hi Alex!', '#direct-messages');
+  await cdp('Page.reload');
+  await hasText('Hi Alex!', '#direct-messages');
+  await nav('inbox');
+  await act('inbox-tab', 'chats');
+  await hasText('Maya Chen');
+  await screenshot('backstory-direct-chats');
+  await act('open-dm', directId);
+  await selectRole('guest');
+  await hasText('Conversation unavailable');
+  assert.equal(await evaluate('document.querySelector("#screen").textContent.includes("drawing routine")'), false);
   assert.deepEqual(runtimeErrors, [], 'No uncaught browser errors');
   console.log('PASS AC-04, AC-05, AC-13: recording and fallback, revocation, withdrawal, and reset');
   console.log('PASS AC-14 and AC-15: public roles, nested comments, revoked quotes, and previous demo data');
   console.log('PASS AC-17 to AC-19: private twin history, memory control, reviewed draft publishing, and photo uploads');
-  console.log('All 19 Backstory demo acceptance cases passed.');
+  console.log('PASS AC-20 and AC-21: photo feed, contextual matches, profiles, private messages, and persistence');
+  console.log('All 21 Backstory demo acceptance cases passed.');
 } finally {
   socket?.close();
   browser.kill();
