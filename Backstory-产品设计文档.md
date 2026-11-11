@@ -1,10 +1,10 @@
 # Backstory 产品设计文档
 
-版本 v0.3 · 2026-11-10 · Demo 评审稿
+版本 v0.4 · 2026-11-11 · Demo 评审稿
 
 **定位**　一个面向北美消费者的 AI 社交产品。看到一段自己关心的经历，可以听当事人怎么说、问一个细节，也可以等对方亲自告诉你后来怎样。
 
-**交付形态**　英文、手机优先的可点击网页，采用小程序式导航。用可切换的演示身份走通发布、匹配、公开讨论、追问、真人补答和再次分享。
+**交付形态**　英文、手机优先的可点击网页，采用小程序式导航。用可切换的演示身份走通私人分身聊天、记忆确认、图文草稿、发布、匹配、公开讨论和真人补答。
 
 ## 1. 产品判断
 
@@ -23,14 +23,15 @@
 
 ## 2. 手机小程序的信息架构
 
-底部导航使用 **Explore · + Share · Inbox · Me**。页面采用单列卡片、底部安全区和固定的主要操作入口。播放器支持暂停、定位到引用片段和查看逐字稿。等待、失败、真人补答均使用文字状态，颜色作为辅助。
+底部导航使用 **Explore · My AI · Inbox · Me**。Explore 右上角的加号进入发布页。演示身份切换入口集中在 Me。页面采用单列卡片、底部安全区和圆角输入条。播放器支持暂停、定位到引用片段和查看逐字稿。
 
 | 页面 | 用户看到什么 | 主要动作 |
 | --- | --- | --- |
-| Explore | 首屏问题框、手选主题、可直接进入的故事 | `Find stories` / `Browse topics` |
+| Explore | 首屏问题框、手选主题、可直接进入的图文故事，右上角加号 | `Find stories` / `Browse topics` / `Create a post` |
+| My AI | 跨几天的长聊天记录、待确认的记忆和 AI 写好的发布草稿 | `History` / `Memories` / `Review draft` |
 | 圈子 | 圈子名、涉及的话题、已有经历；AI 推荐入口附匹配理由 | `Open story` / `Follow circle` |
 | Story | 作者原话、原声和逐字稿，默认显示公开讨论，另有 AI 分身追问入口 | `Discussion` / `Ask Maya’s twin` |
-| + Share | 标题、主题、文字或语音、公开及 AI 引用预览 | `Preview` / `Publish` |
+| 发布页 | 最多四张图、标题、主题、正文或语音、公开及 AI 引用预览 | `Preview` / `Publish` |
 | Inbox | 私密追问和补答，分为收到的问题与发出的问题。预置可操作的示例对话 | `Reply` / `View reply` |
 | Me | 已关注的圈子、草稿和 `Your stories` 中已公开发布的帖子 | `Manage sources` / `Unfollow` |
 
@@ -49,7 +50,7 @@ First Time Living Alone
 “The quiet hit me after work.”
 Maya · ▶ 0:38         [ Open story ]
 
-Explore     + Share     Inbox     Me
+Explore     My AI       Inbox     Me
 ```
 
 ### 主题和圈子
@@ -71,6 +72,8 @@ Explore     + Share     Inbox     Me
 
 **从追问认识人**　读者问 Maya「什么时候最难熬？」AI 引用已有原声回答。再问「三个月后呢？」素材里没有，读者点 `Ask Maya` 发送。Maya 在收件箱录一段补答。读者收到更新，回来听完，再分享自己的经历。系统把新故事关联回原帖，让 Maya 能继续交流。
 
+**从私人交流到分享**　My AI 预置 28 条跨几天的聊天记录。用户先讲搬家后的状态、下班后的游戏和朋友联系，再聊到窗边新布置的角落。AI 提炼一条待确认的私人记忆，并准备好图文草稿。用户点 `Review draft` 后可改文案、换图和换圈子，预览后点 `Publish` 才公开。`Later` 将建议收起为可继续编辑的草稿。私聊中的具体称呼保留在私人会话里。
+
 访客可以浏览公开故事和向故事提问。关注、发帖、向作者发送问题和查看私密收件箱，需要以用户身份操作。Demo 用预置身份完成这些步骤。
 
 | 需求 | 可见行为与边界 | 验收 |
@@ -86,6 +89,9 @@ Explore     + Share     Inbox     Me
 | R-09 演示控制 | 从 `Me` 切换 Maya 和读者，模拟双方可见性，保留同一份演示状态。演示可重置，以便重复验证。 | AC-13 |
 | R-10 公开讨论与身份标识 | 故事显示 `Human post`。公开讨论分别标记真人评论、作者本人回复和 AI 分身回复。用户可发表评论或回复一条公开评论，访客可浏览。AI 分身只显示有效的授权引用。 | AC-14, AC-15 |
 | R-11 收件箱样例 | Inbox 预置标有 `Sample` 的待答、已回复和婉拒对话。可以切换参与者后继续回复，旧版用户的对话和状态随升级保留。 | AC-16 |
+| R-12 私人分身与记忆 | My AI 记录按角色保存，可以查看较早消息或跳到最新消息。记忆经过本人确认后保存，支持编辑和忘记。访客无法读取私人聊天。 | AC-17 |
+| R-13 AI 提议发布 | 分身提出写好的图文草稿，用户可保存到以后、编辑、预览或确认发布。发布预览中的引用权限默认关闭。聊天与记忆保持私人，公开分身只读取帖子授权素材。 | AC-18 |
+| R-14 图文与发布入口 | 从 Explore 的加号发布，支持 JPEG、PNG、WebP，最多四张，每张原始文件上限 10 MB。图片压缩后保存在当前浏览器，草稿可删图、重载并继续编辑。 | AC-19 |
 
 ### 三条状态线
 
@@ -95,7 +101,7 @@ Explore     + Share     Inbox     Me
 
 ## 4. Demo 交付和演示
 
-- **实现范围。** 预置六个演示用户、六个主题、18 条故事和有区分标签的公开讨论。核心问答使用当前故事的素材支持自由提问，至少演示有依据、部分有依据和素材不足三种结果。站内收件箱、公开评论和授权状态随操作更新。
+- **实现范围。** 预置六个演示用户、六个主题、18 条故事和有区分标签的公开讨论。My AI 有长聊天和本地模拟的草稿提议，支持真实图片上传。故事问答使用当前故事的素材，站内收件箱、公开评论和授权状态随操作更新。
 - **三分钟演示。** 先手选一个主题，再用同一首页演示一句话跨圈推荐。打开 Maya 的独居故事，先问一个能引用原声的问题，再问三个月后的变化。切换为 Maya 补答，切回提问者从收件箱继续，最后分享自己的经历。
 - **后续范围。** 圈子成员管理、站外推送和支付放在独立试点。优先扩充那些已经有稳定发帖、回答和回访的圈子。
 
@@ -131,6 +137,9 @@ Explore     + Share     Inbox     Me
 | AC-14 | 遍历六个主题，查看各自首条故事并回复一条公开评论 | 每个主题至少三条故事，用户能分辨帖主、真人评论与 AI 分身回复。公开回复在其他角色下可见，私密追问仍由参与者查看。 |
 | AC-15 | 在保存过旧版数据的浏览器载入新版 | 自动补齐新增样例，保留已关注圈子和撤回状态。撤回过的素材不会显示在 AI 分身回复里。 |
 | AC-16 | 查看公开帖子和私密收件箱，回复一条待答示例后切换身份 | `Your stories` 只展示自己的公开帖。Inbox 的样例有标识和状态，回复重载后保留，访客无法读取。升级时保留已有对话。 |
+| AC-17 | 打开 My AI，查看历史、发送消息、确认并编辑或忘记一条记忆，再切换身份 | 初始有 28 条消息。私人消息、记忆和待上传照片按身份保存，刷新可恢复，访客无法读取。 |
+| AC-18 | 将分身提议留到以后，再编辑、预览、取消一次，最后确认发布 | 预览前后均可继续编辑，确认前内容保持私人。发布只创建一条帖子，私聊细节和私人记忆不进入公开问答。 |
+| AC-19 | 从 Explore 加号上传照片，删图、刷新、尝试第五张图，并发布一条有图草稿 | 图片正确预览并随所选内容发布。最多四张，超限有提示，刷新保留草稿。底部导航的第二项为 My AI。 |
 
 ## 7. App Store Description
 
@@ -138,9 +147,11 @@ Explore     + Share     Inbox     Me
 
 > Every story has a “what happened next?”
 >
-> Backstory is a place to ask about things people have actually lived through. Browse stories about games, work, travel, relationships, and everyday life. Or start with a question and find people whose experiences speak to it.
+> Backstory is a place to share and ask about things people have actually lived through. Browse photo stories about games, work, travel, relationships, and everyday life. Or start with a question and find people whose experiences speak to it.
 >
 > Hear the details in the storyteller’s own words. When a question goes beyond the story, send it to the person who lived it. Come back for their reply, follow circles you care about, or share a story of your own.
+>
+> Think out loud with your own AI. Keep the memories you choose, review a draft when a story takes shape, and decide what to share.
 
 ## 8. 下一步与待验证假设
 

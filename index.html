@@ -52,6 +52,7 @@
     .avatar { display: inline-grid; place-items: center; flex: none; width: 31px; height: 31px; border-radius: 50%; background: var(--avatar-bg, #e9dff8); color: var(--avatar-ink, #462779); font-weight: 800; font-size: 12px; }
     .avatar.tiny { width: 23px; height: 23px; font-size: 10px; }
     .scroll { overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d8cedc transparent; }
+    .scroll:focus { outline: none; }
     .page { padding: 22px 19px 27px; }
     .eyebrow { font-size: 10px; font-weight: 800; line-height: 1.25; text-transform: uppercase; letter-spacing: .14em; color: var(--purple-ink); }
     .page-title { font: 400 34px/1.04 var(--serif); letter-spacing: -.05em; margin: 7px 0 9px; }
@@ -176,6 +177,45 @@
     .writing-toolbar .field select { width: auto; max-width: 100%; border: 0; border-radius: 99px; background: var(--lavender); color: var(--purple-ink); font-weight: 650; font-size: 12px; padding: 6px 8px; }
     .writing-toolbar .ghost { min-height: 32px; padding: 5px 9px; border-radius: 99px; font-size: 12px; }
     .writing-toolbar .recording { flex: 1 1 auto; }
+    .create-button { border: 0; background: var(--violet); color: white; border-radius: 50%; width: 35px; height: 35px; display: grid; place-items: center; }
+    .photo-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+    .photo-strip.single { grid-template-columns: 1fr; }
+    .photo-strip img { display: block; width: 100%; height: 150px; object-fit: cover; border-radius: 12px; background: #eadfd4; }
+    .photo-strip.single img { height: 190px; }
+    .photo-edit { position: relative; }
+    .photo-edit .close { position: absolute; right: 6px; top: 6px; background: #fffefae8; }
+    .photo-edit img { height: 112px; }
+    .upload-button { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; color: var(--purple-ink); background: var(--lavender); border-radius: 12px; padding: 7px 12px; font-size: 12px; font-weight: 700; }
+    .upload-button input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .upload-button:focus-within { outline: 3px solid #8962d6; outline-offset: 2px; }
+    .twin-page { padding: 17px 16px 12px; }
+    .twin-intro { display: flex; align-items: center; gap: 9px; padding: 0 0 13px; border-bottom: 1px solid var(--line); }
+    .twin-intro .twin-avatar { width: 38px; height: 38px; border-radius: 13px; }
+    .twin-intro h1 { font-size: 17px; letter-spacing: -.03em; }
+    .twin-intro p { font-size: 11px; margin-top: 3px; }
+    .twin-intro .text-button { margin-left: auto; font-size: 11px; }
+    .twin-log { display: grid; gap: 13px; padding: 18px 0; }
+    .day-label { justify-self: center; padding: 3px 9px; color: var(--muted); background: #eee9e2; border-radius: 99px; font-size: 10px; font-weight: 650; }
+    .twin-turn { display: grid; grid-template-columns: 23px minmax(0, 1fr); gap: 7px; padding-right: 16px; }
+    .twin-turn .twin-avatar { width: 23px; height: 23px; border-radius: 8px; }
+    .twin-turn.user { display: flex; justify-content: flex-end; padding-right: 0; padding-left: 35px; }
+    .twin-turn .bubble { min-width: 0; font-size: 13px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .twin-turn.user .bubble { background: #eee6f8; padding: 10px 13px; border-radius: 16px 16px 4px 16px; }
+    .twin-turn .photo-strip { margin-top: 7px; }
+    .twin-turn .photo-strip.single img { height: 125px; }
+    .memory-suggestion, .post-suggestion { border-radius: 15px; border: 1px solid #e1d5ef; background: var(--white); padding: 13px; display: grid; gap: 9px; margin-left: 30px; }
+    .memory-suggestion { background: #f1ede6; border-color: #e2dace; }
+    .post-suggestion h2 { font: 400 24px/1.1 var(--serif); letter-spacing: -.03em; }
+    .post-suggestion > p { color: var(--muted); font-size: 12px; }
+    .post-suggestion .photo-strip { margin: 0; }
+    .post-suggestion .photo-strip.single img { height: 105px; }
+    .twin-composer { position: sticky; bottom: -12px; margin: 0 -16px -12px; padding: 10px 14px 12px; background: #faf8f4f5; border-top: 1px solid var(--line); }
+    .twin-composer .composer { background: var(--white); border-color: var(--line); box-shadow: 0 3px 14px #3024420a; }
+    .attach-button { display: grid; place-items: center; width: 27px; height: 27px; flex: none; color: var(--purple-ink); cursor: pointer; }
+    .attach-button input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .draft-origin { display: flex; align-items: center; gap: 6px; padding: 9px 11px; background: var(--lavender); color: var(--purple-ink); border-radius: 10px; margin-top: 12px; font-size: 12px; }
+    .memory-list { display: grid; gap: 9px; }
+    .memory-list .panel { display: grid; gap: 8px; }
     .check-row { display: flex; gap: 8px; align-items: flex-start; padding: 7px 0; font-size: 13px; }
     .check-row input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--violet); flex: none; }
     .check-row span { overflow-wrap: anywhere; }
@@ -223,7 +263,7 @@
       <ol>
         <li><button data-action="try-match"><span class="step-no">01</span> Find a circle by asking a question</button></li>
         <li><button data-action="open-story" data-id="solo"><span class="step-no">02</span> Ask about Maya’s story</button></li>
-        <li><button data-action="demo"><span class="step-no">03</span> Switch roles to answer as Maya</button></li>
+        <li><button data-action="my-ai"><span class="step-no">03</span> Chat with your twin and review a draft</button></li>
       </ol>
       <p class="desk-note">Interactive demo · Sample stories · Local simulation</p>
     </aside>
@@ -242,6 +282,7 @@
       brand: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-5.4 4 .9-4.3A2.5 2.5 0 0 1 4 13.5z"/><path d="M8 8h8m-8 4h5"/>',
       compass: '<circle cx="12" cy="12" r="9"/><path d="m15.6 8.4-1.9 5.3-5.3 1.9 1.9-5.3z"/>',
       plus: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12h8m-4-4v8"/>',
+      add: '<path d="M5 12h14M12 5v14"/>',
       inbox: '<path d="M5 4h14l2 10v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4z"/><path d="M3 14h5l2 2h4l2-2h5"/>',
       user: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>',
       sparkle: '<path d="M12 2.5 14.3 9.7l7.2 2.3-7.2 2.3-2.3 7.2-2.3-7.2-7.2-2.3 7.2-2.3z"/>',
@@ -263,7 +304,8 @@
       mic: '<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3"/>',
       lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>',
       search: '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4.5 4.5"/>',
-      chat: '<path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-6 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>'
+      chat: '<path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-6 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>',
+      photo: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="1.5"/><path d="m4 17 5-5 4 4 3-3 5 5"/>'
     };
 
     const people = {
@@ -409,6 +451,36 @@
     ];
     const storageKey = 'backstory-demo-v2';
     const legacyStorageKey = 'backstory-demo-v1';
+    const twinConversation = [
+      ['Monday', 'user', 'I’ve been in the new apartment for three weeks, and it still feels like I’m visiting.'],
+      ['', 'ai', 'What gives you that feeling most when you walk in?'],
+      ['', 'user', 'The boxes. They’re still against the wall. I get home, look at them, and decide I’ll deal with them tomorrow.'],
+      ['', 'ai', 'What would you want that space to feel like at the end of a workday?'],
+      ['', 'user', 'Somewhere I can sit down without looking at a to-do list.'],
+      ['', 'ai', 'Is there a small spot you’d actually enjoy setting up first?'],
+      ['', 'user', 'There’s a window with good light in the afternoon. I have a chair that could go there.'],
+      ['', 'ai', 'A chair and that window sound like a manageable place to start. You can decide what belongs around it once you’ve sat there.'],
+      ['Yesterday', 'user', 'Work was a lot today. My friends invited me to play ranked, but I couldn’t face another hour of trying to win.'],
+      ['', 'ai', 'Did you want to play, or mostly spend a little time with them?'],
+      ['', 'user', 'Mostly hear their voices. I miss the days when we could just hang out.'],
+      ['', 'ai', 'What would an easy version of hanging out look like this week?'],
+      ['', 'user', 'Something we can stop after half an hour. I’d be happy just talking while they play, too.'],
+      ['', 'ai', 'You could say exactly that. It gives your friends a way to include you without needing a full game night.'],
+      ['', 'user', 'I sent a voice note instead. A friend called while I was cooking. That part of the evening was really nice.'],
+      ['', 'ai', 'What felt nice about it?'],
+      ['', 'user', 'I could share the small things from my day without having to arrange a whole catch-up.'],
+      ['', 'ai', 'That sounds like a kind of connection you’d like to make room for again.'],
+      ['Today', 'user', 'I finally moved the chair next to the window this morning.'],
+      ['', 'ai', 'How did it feel when you sat down?'],
+      ['', 'user', 'A little more like home. The boxes are still there, but I had one place where I wanted to stay.'],
+      ['', 'ai', 'What did you do with that first quiet moment?'],
+      ['', 'user', 'Made coffee and sat there for ten minutes before work. It was a small thing, but I liked it.'],
+      ['', 'ai', 'Would you want to keep that small morning ritual?'],
+      ['', 'user', 'I think so. One detail for just this chat: I call the chair my little escape hatch.'],
+      ['', 'ai', 'I’ll keep that detail in this private conversation. The part about making one corner feel like home could stand on its own.'],
+      ['', 'user', 'Here’s the corner. I’d rather tell that small story than make the whole place look finished.'],
+      ['', 'ai', 'I put together a draft from what you shared. You can review the words, photo, and circle before deciding whether to publish.']
+    ];
     const stopWords = new Set('about after again are can could did do does for from had has have how into is it later me more my of on or say she that the then this was were what when which who why will with would you your'.split(' '));
 
     const topbar = document.querySelector('#topbar');
@@ -420,7 +492,7 @@
     function freshState(role = 'alex') {
       const follows = Object.fromEntries(Object.keys(people).filter(id => id !== 'guest').map(id => [id, []]));
       const questions = structuredClone(sampleQuestions).map(question => ({ ...question, sample: true }));
-      return { role, stories: structuredClone(seeds), follows, questions, chats: {}, drafts: {}, replies: {}, comments: [] };
+      return { role, stories: structuredClone(seeds), follows, questions, chats: {}, drafts: {}, replies: {}, comments: [], twins: {} };
     }
 
     function readState() {
@@ -453,6 +525,8 @@
     let recording = null;
     let recordingMessage = '';
     let focusChat = false;
+    let focusTwin = false;
+    let imageUploadPending = false;
     let storyTab = 'discussion';
     let commentParent = null;
     let toastTimer;
@@ -553,7 +627,7 @@
     function readPage() {
       const hash = location.hash.slice(1);
       const [view, id] = hash.split('=');
-      const plainViews = ['explore', 'share', 'inbox', 'me'];
+      const plainViews = ['explore', 'share', 'my-ai', 'inbox', 'me'];
       if (plainViews.includes(view)) return { view };
       if (['circle', 'story', 'thread', 'manage'].includes(view) && /^[a-z0-9-]+$/i.test(id || '')) return { view, id };
       return { view: 'explore' };
@@ -576,8 +650,39 @@
     }
 
     function getDraft() {
-      if (!state.drafts[state.role]) state.drafts[state.role] = { title: '', circle: 'life', text: '', audio: '', linked: '' };
+      if (!state.drafts[state.role]) state.drafts[state.role] = { title: '', circle: 'life', text: '', audio: '', linked: '', images: [] };
+      if (!state.drafts[state.role].images) state.drafts[state.role].images = [];
       return state.drafts[state.role];
+    }
+
+    function sampleSnapshot() {
+      const image = roomArt().replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(image)}`;
+    }
+
+    function getTwin() {
+      if (state.role === 'guest') return null;
+      if (!state.twins[state.role]) {
+        state.twins[state.role] = {
+          messages: twinConversation.map(([day, kind, text], index) => ({
+            id: `sample-twin-${index}`, day, kind, text,
+            images: index === 26 ? [sampleSnapshot()] : []
+          })),
+          memories: [
+            { id: 'memory-connection', text: 'You enjoy sharing small details from your day with a friend while cooking.', status: 'remembered' },
+            { id: 'memory-corner', text: 'Setting up a chair by the window made your new apartment feel more like home.', status: 'suggested' }
+          ],
+          proposal: {
+            id: 'window-corner', status: 'suggested', circle: 'life',
+            title: 'Three weeks in, one corner finally felt like home.',
+            text: 'I’ve been in my new apartment for three weeks, and I’d been putting off unpacking. Today I set up a chair by the window and sat there with a coffee for ten minutes before work.\n\nThe boxes are still there. Having one place where I wanted to stay made the apartment feel a little more like home.',
+            images: [sampleSnapshot()]
+          },
+          pendingImages: [], input: ''
+        };
+        save();
+      }
+      return state.twins[state.role];
     }
 
     function getReply(id) {
@@ -652,14 +757,28 @@
 
     function storyKind() { return '<span class="kind human">Human post</span>'; }
 
+    function renderPhotos(images = [], editable = false, target = 'story') {
+      if (!images.length) return '';
+      return `<div class="photo-strip${images.length === 1 ? ' single' : ''}">${images.map((src, index) => `<figure class="${editable ? 'photo-edit' : ''}">
+        <img src="${escape(src)}" alt="${src.startsWith('data:image/svg') ? 'Illustrated demo snapshot of a living room' : `Attached photo ${index + 1}`}" loading="lazy">
+        ${editable ? `<button type="button" class="close" data-action="remove-photo" data-id="${target}:${index}" aria-label="Remove photo ${index + 1}">${icon('close', 14)}</button>` : ''}
+      </figure>`).join('')}</div>`;
+    }
+
+    function uploadControl(target, compact = false) {
+      return `<label class="${compact ? 'attach-button' : 'upload-button'}">${icon('photo', compact ? 20 : 17)}${compact ? '' : 'Add photos'}
+        <input type="file" data-upload="${target}" accept="image/jpeg,image/png,image/webp" multiple aria-label="${target === 'twin' ? 'Attach photos to your private chat' : 'Add photos to your story'}">
+      </label>`;
+    }
+
     function renderCard(story, featured = false) {
       const circle = storyCircle(story);
       if (featured) return `<button class="story-card" type="button" data-action="open-story" data-id="${escape(story.id)}">
-        ${story.cover === 'room' ? `<div class="story-cover">${roomArt()}</div>` : ''}
+        ${story.images?.length ? renderPhotos(story.images.slice(0, 1)) : story.cover === 'room' ? `<div class="story-cover">${roomArt()}</div>` : ''}
         <div class="card-body"><div class="eyebrow">${escape(circle.title)}</div><h3>${escape(story.title)}</h3>
         <div class="byline">${byline(story)}${storyKind()}${story.id === 'solo' ? ` · ${clock(sampleClipTimes.at(-1))} listen` : ''}<span class="trailing">${icon('right', 15)}</span></div></div></button>`;
       return `<button class="story-card compact-card" type="button" data-action="open-story" data-id="${escape(story.id)}">
-        ${circleIcon(circle)}<div><div class="eyebrow">${escape(circle.title)}</div><h3>${escape(story.title)}</h3><div class="post-meta">${avatar(story.author, true)}${people[story.author].name} ${storyKind()}</div></div>${icon('right', 15)}
+        ${circleIcon(circle)}<div><div class="eyebrow">${escape(circle.title)}</div><h3>${escape(story.title)}</h3>${story.images?.length ? renderPhotos(story.images.slice(0, 1)) : ''}<div class="post-meta">${avatar(story.author, true)}${people[story.author].name} ${storyKind()}</div></div>${icon('right', 15)}
       </button>`;
     }
 
@@ -796,7 +915,7 @@
         <div class="button-row"><button class="text-button eyebrow" data-action="circle" data-id="${circle.id}">${escape(circle.title)}</button>${own ? action('manage', 'Manage sources', story.id, 'text-button') : ''}</div>
         <div class="story-copy"><h1 class="page-title">${escape(story.title)}</h1><p class="subtle">${escape(summary)}</p></div>
         <div class="byline">${byline(story)}${storyKind()}<span class="trailing">${action('copy-link', `${icon('share', 14)} Share`, story.id, 'text-button')}</span></div>
-        ${story.cover === 'room' ? `<div class="story-cover">${roomArt()}</div>` : ''}
+        ${story.images?.length ? renderPhotos(story.images) : story.cover === 'room' ? `<div class="story-cover">${roomArt()}</div>` : ''}
         ${linked ? `<p class="subtle">In response to ${action('open-story', escape(linked.title), linked.id, 'text-button')}</p>` : ''}
         ${audio ? `<div class="audio-row">
           <button type="button" class="icon-button" data-action="play-story" data-id="${escape(story.id)}" aria-label="Play story">${icon('play', 16)}</button>
@@ -866,9 +985,12 @@
       return `<div class="page">
         <div class="eyebrow">Your turn to share</div><h1 class="page-title">Tell a story</h1>
         <p class="subtle">Start with one thing you actually experienced.</p>
+        ${draft.fromTwin ? '<p class="draft-origin">' + icon('sparkle', 14) + 'Drafted with your AI · Review before publishing</p>' : ''}
         ${linked ? `<p class="pill space">In response to ${escape(linked.title)}</p>` : ''}
         <form class="form-stack space" id="share-form">
           <div class="writing-panel">
+            ${renderPhotos(draft.images, true)}
+            ${uploadControl('story')}
             <label class="field">Title<input name="title" maxlength="100" value="${escape(draft.title)}" placeholder="The one detail that stayed with me" required></label>
             <label class="field">${draft.audio ? 'Transcript' : 'Your story'}<textarea name="text" maxlength="1800" placeholder="What happened? What surprised you?" required>${escape(draft.text)}</textarea></label>
             <div class="writing-toolbar"><label class="field">Circle<select name="circle">${circles.map(circle => `<option value="${circle.id}"${circle.id === draft.circle ? ' selected' : ''}>${circle.topic} · ${escape(circle.title)}</option>`).join('')}</select></label>
@@ -877,6 +999,38 @@
           <p class="subtle">You’ll preview your public story and choose which parts AI can quote.</p>
           <button class="primary" type="submit">Preview</button>
         </form>
+      </div>`;
+    }
+
+    function renderTwinProposal(twin) {
+      const proposal = twin.proposal;
+      if (proposal.status === 'published') return `<article class="post-suggestion" id="twin-proposal"><div class="eyebrow">Published with your confirmation</div><h2>${escape(proposal.title)}</h2>${action('open-story', 'View your post', proposal.storyId, 'primary')}</article>`;
+      if (proposal.status === 'saved') return `<article class="post-suggestion" id="twin-proposal"><span class="kind ai">Saved for later</span><h2>${escape(proposal.title)}</h2>${action('review-twin-draft', 'Review saved draft', '', 'ghost')}</article>`;
+      return `<article class="post-suggestion" id="twin-proposal">
+        <div class="button-row"><span class="kind ai">Draft for you</span><span class="subtle">${proposal.status === 'saved' ? 'Saved for later' : 'Ready when you are'}</span></div>
+        ${renderPhotos(proposal.images)}<h2>${escape(proposal.title)}</h2><p>${escape(proposal.text)}</p>
+        <div class="post-meta">Suggested circle · ${escape(getCircle(proposal.circle).title)}</div>
+        <div class="button-row">${action('review-twin-draft', 'Review draft', '', 'primary')}${proposal.status === 'suggested' ? action('save-twin-draft', 'Later', '', 'text-button') : ''}</div>
+      </article>`;
+    }
+
+    function renderMyAI() {
+      if (state.role === 'guest') return `<div class="page">${guestPrompt()}</div>`;
+      const twin = getTwin();
+      const memory = twin.memories.find(item => item.status === 'suggested');
+      return `<div class="page twin-page">
+        <div class="twin-intro"><span class="twin-avatar">${icon('sparkle', 21)}</span><div><h1>${roleName()}’s AI</h1><p class="muted">Your private space to think out loud.</p></div>${action('twin-latest', 'Latest ↓', '', 'text-button')}</div>
+        <div class="twin-log" id="twin-log">
+          ${twin.messages.map(message => `${message.day ? `<div class="day-label">${escape(message.day)}</div>` : ''}<article class="twin-turn ${message.kind === 'user' ? 'user' : ''}" data-speaker="${message.kind}">
+            ${message.kind === 'user' ? '' : `<span class="twin-avatar" aria-label="Your AI">${icon('sparkle', 13)}</span>`}
+            <div class="bubble">${escape(message.text)}${renderPhotos(message.images)}</div>
+          </article>`).join('')}
+          ${memory ? `<article class="memory-suggestion" id="memory-suggestion"><div class="eyebrow">Something to remember?</div><p class="subtle">${escape(memory.text)}</p><div class="button-row">${action('remember-twin', 'Remember', memory.id, 'ghost')}${action('edit-memory', 'Edit', memory.id, 'text-button')}${action('skip-memory', 'Skip', memory.id, 'text-button')}</div></article>` : ''}
+          ${renderTwinProposal(twin)}
+        </div>
+        <div class="twin-composer">${renderPhotos(twin.pendingImages, true, 'twin')}
+          <form class="composer" id="twin-form">${uploadControl('twin', true)}<input name="message" aria-label="Message your AI" placeholder="Tell your AI something…" maxlength="1200" value="${escape(twin.input)}"><button class="icon-button send" type="submit" aria-label="Send to your AI">${icon('up', 17)}</button></form>
+        </div>
       </div>`;
     }
 
@@ -982,17 +1136,25 @@
     function render({ top = false } = {}) {
       stopPlayback();
       const scrollTop = screen.scrollTop;
-      const main = ['explore', 'share', 'inbox', 'me'];
-      const views = { explore: renderExplore, circle: renderCircle, story: renderStory, share: renderShare, inbox: renderInbox, thread: renderThread, me: renderMe, manage: renderManage };
-      const tabs = [{ view: 'explore', icon: 'compass', label: 'Explore' }, { view: 'share', icon: 'plus', label: 'Share' }, { view: 'inbox', icon: 'inbox', label: 'Inbox' }, { view: 'me', icon: 'user', label: 'Me' }];
-      const section = { circle: 'explore', story: 'explore', thread: 'inbox', manage: 'me' }[page.view] || page.view;
+      const main = ['explore', 'my-ai', 'inbox', 'me'];
+      const views = { explore: renderExplore, circle: renderCircle, story: renderStory, share: renderShare, 'my-ai': renderMyAI, inbox: renderInbox, thread: renderThread, me: renderMe, manage: renderManage };
+      const tabs = [{ view: 'explore', icon: 'compass', label: 'Explore' }, { view: 'my-ai', icon: 'sparkle', label: 'My AI' }, { view: 'inbox', icon: 'inbox', label: 'Inbox' }, { view: 'me', icon: 'user', label: 'Me' }];
+      const section = { circle: 'explore', story: 'explore', share: 'explore', thread: 'inbox', manage: 'me' }[page.view] || page.view;
       const heading = main.includes(page.view)
-        ? `<a class="wordmark" href="#explore" data-action="explore"><span class="brand-icon">${icon('brand', 17)}</span>Backstory</a>`
+        ? page.view === 'my-ai'
+          ? `<span class="wordmark"><span class="brand-icon">${icon('sparkle', 17)}</span>My AI</span>`
+          : `<a class="wordmark" href="#explore" data-action="explore"><span class="brand-icon">${icon('brand', 17)}</span>Backstory</a>`
         : action('back', `${icon('back', 17)} ${page.view === 'thread' ? 'Inbox' : page.view === 'manage' ? 'Me' : 'Explore'}`, section, 'back');
-      topbar.innerHTML = `${heading}<div class="toolbar"><button type="button" class="demo-button" data-action="demo" aria-label="Demo controls. Viewing as ${roleName()}">Demo ${icon('more', 15)} ${avatar(state.role, true)}</button></div>`;
+      const toolbar = page.view === 'explore'
+        ? `<button type="button" class="create-button" data-action="share" aria-label="Create a post">${icon('add', 21)}</button>`
+        : page.view === 'my-ai' && state.role !== 'guest'
+          ? `${action('twin-history', 'History', '', 'text-button')}${action('twin-memories', 'Memories', '', 'text-button')}`
+          : avatar(state.role, true);
+      topbar.innerHTML = `${heading}<div class="toolbar">${toolbar}</div>`;
       screen.innerHTML = views[page.view]();
       navigation.innerHTML = tabs.map(tab => `<button class="nav-button" data-action="${tab.view}" ${section === tab.view ? 'aria-current="page"' : ''}>${icon(tab.icon, 19)}${tab.label}${tab.view === 'inbox' && unreadCount() ? '<span class="nav-dot" aria-label="Unread updates"></span>' : ''}</button>`).join('');
-      screen.scrollTop = top ? 0 : scrollTop;
+      screen.scrollTop = page.view === 'my-ai' && (top || focusTwin) ? screen.scrollHeight : top ? 0 : scrollTop;
+      focusTwin = false;
       if (focusChat) {
         screen.querySelector('#story-messages .message:last-child')?.scrollIntoView({ block: 'nearest' });
         focusChat = false;
@@ -1117,22 +1279,171 @@
       showToast(already ? 'Circle unfollowed' : 'Circle followed');
     }
 
+    function showTwinMemories() {
+      const twin = getTwin();
+      if (!twin) return;
+      const memories = twin.memories.filter(memory => memory.status !== 'dismissed');
+      showDialog('Your AI’s memories', `<p class="subtle">Private notes you can edit or forget. Public answers use the sources you approve on each post.</p>
+        <div class="memory-list">${memories.map(memory => `<article class="panel"><span class="kind ${memory.status === 'remembered' ? 'human' : 'ai'}">${memory.status === 'remembered' ? 'Remembered' : 'Waiting for you'}</span><p>${escape(memory.text)}</p><div class="button-row">${memory.status === 'suggested' ? action('remember-twin', 'Remember', memory.id) : ''}${action('edit-memory', 'Edit', memory.id, 'text-button')}${action('forget-memory', 'Forget', memory.id, 'text-button danger')}</div></article>`).join('') || '<p class="subtle">Add a memory when you want your AI to keep a detail.</p>'}</div>`);
+    }
+
+    function setMemoryStatus(id, status) {
+      const twin = getTwin();
+      const memory = twin?.memories.find(item => item.id === id);
+      if (!memory) return;
+      memory.status = status;
+      save();
+      if (dialog.open) showTwinMemories();
+      render();
+      showToast(status === 'remembered' ? 'Memory saved privately' : 'Memory skipped');
+    }
+
+    function editMemory(id) {
+      const memory = getTwin()?.memories.find(item => item.id === id);
+      if (!memory) return;
+      showDialog('Edit a private memory', `<form class="form-stack" id="memory-form" data-id="${escape(id)}"><label class="field">What should your AI remember?<textarea name="memory" maxlength="500" required>${escape(memory.text)}</textarea></label><button type="submit" class="primary">Save memory</button></form>`);
+    }
+
+    function saveMemory(form) {
+      const memory = getTwin()?.memories.find(item => item.id === form.dataset.id);
+      const text = String(new FormData(form).get('memory')).trim();
+      if (!memory || !text) return;
+      memory.text = text;
+      memory.status = 'remembered';
+      save();
+      showTwinMemories();
+      render();
+    }
+
+    function forgetMemory(id) {
+      const twin = getTwin();
+      if (!twin) return;
+      twin.memories = twin.memories.filter(memory => memory.id !== id);
+      save();
+      showTwinMemories();
+      render();
+    }
+
+    function reviewTwinDraft() {
+      const twin = getTwin();
+      if (!twin) return;
+      const proposal = twin.proposal;
+      if (proposal.status === 'published') return navigate('story', proposal.storyId);
+      const current = state.drafts[state.role];
+      if (current?.fromTwin === proposal.id) return navigate('share');
+      const role = state.role;
+      const openDraft = () => {
+        if (state.role !== role) return;
+        state.drafts[role] = { title: proposal.title, text: proposal.text, circle: proposal.circle, images: [...proposal.images], fromTwin: proposal.id, audio: '', linked: '' };
+        save();
+        navigate('share');
+      };
+      if (current && (current.title || current.text || current.images?.length || current.audio)) {
+        confirmation('Replace your current post draft?', '<p class="subtle">Your current unfinished post will be replaced by this AI draft.</p>', 'Use this draft', openDraft);
+      } else openDraft();
+    }
+
+    function saveTwinDraft() {
+      const twin = getTwin();
+      if (!twin || twin.proposal.status !== 'suggested') return;
+      twin.proposal.status = 'saved';
+      save();
+      render();
+      showToast('Draft saved. Keep chatting whenever you want.');
+    }
+
+    function sendToTwin(text) {
+      const twin = getTwin();
+      if (!twin || imageUploadPending || (!text.trim() && !twin.pendingImages.length)) return;
+      const message = text.trim();
+      const images = [...twin.pendingImages];
+      const keepPrivate = /\b(?:private|don['’]?t share|do not share|just this chat|only.*(?:chat|myself))\b|仅.*聊天|不要.*发|别.*公开|只.*自己/i.test(message);
+      twin.messages.push({ id: makeId('twin-user'), kind: 'user', text: message, images, added: true, shareable: !keepPrivate });
+      twin.pendingImages = [];
+      twin.input = '';
+      let response = images.length ? 'I’ve kept the photo with this private conversation. What detail in it matters most to you?' : 'What part of that experience would you want to remember?';
+      if (keepPrivate) response = 'I’ll keep that note in this private chat. What else would you like to think through?';
+      const additions = twin.messages.filter(item => item.kind === 'user' && item.added && item.shareable !== false).slice(-2);
+      if (twin.proposal.status === 'published' && additions.length === 2 && additions.every(item => item.text.length > 35)) {
+        const storyText = additions.map(item => item.text).join('\n\n');
+        const circle = matchCircles(storyText)[0]?.id || 'life';
+        twin.proposal = { id: makeId('twin-draft'), status: 'suggested', title: additions[0].text.split(/[.!?]/)[0].slice(0, 95), text: storyText, images: additions.flatMap(item => item.images || []).slice(0, 4), circle };
+        response = 'I’ve collected your words into another draft below. You can edit it before deciding whether to publish.';
+      }
+      twin.messages.push({ id: makeId('twin-ai'), kind: 'ai', text: response });
+      save();
+      focusTwin = true;
+      render();
+    }
+
+    async function uploadPhotos(input) {
+      const role = state.role;
+      if (role === 'guest' || imageUploadPending) return;
+      const target = input.dataset.upload;
+      const owner = target === 'twin' ? getTwin() : getDraft();
+      const key = target === 'twin' ? 'pendingImages' : 'images';
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
+      if (files.length + owner[key].length > 4) return showToast('Choose up to four photos per post or message.');
+      if (files.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10000000)) return showToast('Choose JPEG, PNG, or WebP photos under 10 MB.');
+      imageUploadPending = true;
+      try {
+        const images = [];
+        for (const file of files) {
+          const bitmap = await createImageBitmap(file);
+          const scale = Math.min(1, 1000 / Math.max(bitmap.width, bitmap.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+          canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+          const context = canvas.getContext('2d');
+          context.fillStyle = '#ffffff';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          images.push(canvas.toDataURL('image/jpeg', .8));
+          bitmap.close();
+        }
+        if ((target === 'twin' ? state.twins[role] : state.drafts[role]) !== owner) return;
+        owner[key].push(...images);
+        save();
+        if (state.role === role) render();
+      } catch { showToast('This image couldn’t be opened. Try a different photo.'); }
+      finally { imageUploadPending = false; }
+    }
+
+    function removePhoto(id) {
+      const [target, position] = id.split(':');
+      const owner = target === 'twin' ? getTwin() : getDraft();
+      const key = target === 'twin' ? 'pendingImages' : 'images';
+      const index = Number(position);
+      if (!owner || !Number.isInteger(index) || index < 0 || index >= owner[key].length) return;
+      owner[key].splice(index, 1);
+      save();
+      render();
+    }
+
     function previewStory() {
       const draft = getDraft();
+      if (imageUploadPending) return showToast('Wait for the photo to finish loading.');
       if (recording) return showToast('Stop recording before previewing.');
       if (!draft.title.trim() || !draft.text.trim()) return showToast('Add a title and some story text or a transcript.');
       const role = state.role;
       const paragraphs = draft.text.trim().split(/\n\s*\n/).map(part => part.trim()).filter(Boolean);
-      confirmation('Review your story', `<h3>${escape(draft.title.trim())}</h3>${draft.audio ? `<div class="recording"><audio controls preload="metadata" src="${escape(draft.audio)}" aria-label="Preview story audio"></audio></div>` : ''}<p class="subtle">All parts below will be public. Select the parts AI may quote when people ask about this story.</p>
+      confirmation('Review your story', `<h3>${escape(draft.title.trim())}</h3>${renderPhotos(draft.images)}${draft.audio ? `<div class="recording"><audio controls preload="metadata" src="${escape(draft.audio)}" aria-label="Preview story audio"></audio></div>` : ''}<p class="subtle">The selected photos and text will be public. Select the text AI may quote when people ask about this story.</p>
         <div class="checkboxes">${paragraphs.map((part, index) => `<label class="check-row"><input type="checkbox" name="publish-source" value="${index}"><span>${escape(part)}</span></label>`).join('')}</div>`, 'Publish story', () => {
         if (state.role !== role) return;
+        const proposal = draft.fromTwin ? state.twins[role]?.proposal : null;
+        if (proposal && proposal.id === draft.fromTwin && proposal.status === 'published') return navigate('story', proposal.storyId);
         const allowed = new Set(Array.from(dialog.querySelectorAll('input[name="publish-source"]:checked'), box => Number(box.value)));
         const story = {
           id: makeId('story'), author: role, title: draft.title.trim(), circleIds: [draft.circle],
-          summary: '', created: true, linked: getStory(draft.linked)?.id, audio: draft.audio,
+          summary: '', created: true, linked: getStory(draft.linked)?.id, audio: draft.audio, images: [...draft.images],
           sources: paragraphs.map((text, index) => ({ id: makeId('source'), enabled: allowed.has(index), text, ...(paragraphs.length === 1 && draft.audio ? { audio: draft.audio } : {}) }))
         };
         state.stories.unshift(story);
+        if (proposal && proposal.id === draft.fromTwin) {
+          proposal.status = 'published';
+          proposal.storyId = story.id;
+        }
         const item = getQuestion(draft.thread);
         if (canOpenQuestion(item) && item.asker === role && story.linked === item.storyId) {
           item.sharedStory = story.id;
@@ -1414,7 +1725,7 @@
     }
 
     const handlers = {
-      explore: () => navigate('explore'), share: () => navigate('share'), inbox: () => navigate('inbox'), me: () => navigate('me'),
+      explore: () => navigate('explore'), share: () => navigate('share'), 'my-ai': () => navigate('my-ai'), inbox: () => navigate('inbox'), me: () => navigate('me'),
       back: id => navigate(id), circle: id => navigate('circle', id),
       'open-story': id => { askError = null; navigate('story', id); },
       'open-thread': openThread, manage: id => navigate('manage', id), follow: toggleFollow,
@@ -1430,6 +1741,14 @@
       'share-linked': shareLinked, 'confirm-withdraw': confirmWithdraw,
       'copy-link': copyStoryLink, 'copy-current': copyCurrentLink,
       'play-story': playStory, 'play-source': playSource,
+      'twin-history': () => { screen.scrollTop = 0; },
+      'twin-latest': () => { screen.scrollTop = screen.scrollHeight; },
+      'twin-memories': showTwinMemories,
+      'remember-twin': id => setMemoryStatus(id, 'remembered'),
+      'skip-memory': id => setMemoryStatus(id, 'dismissed'),
+      'edit-memory': editMemory, 'forget-memory': forgetMemory,
+      'review-twin-draft': reviewTwinDraft, 'save-twin-draft': saveTwinDraft,
+      'remove-photo': removePhoto,
       'story-tab': changeStoryTab, 'comment-reply': replyToComment,
       'cancel-comment-reply': () => { commentParent = null; render(); },
       record: startRecording, 'stop-recording': finishRecording,
@@ -1461,6 +1780,8 @@
         case 'followup-form': sendFollowup(String(values.get('note'))); break;
         case 'comment-form': postComment(String(values.get('comment'))); break;
         case 'source-form': saveSources(form); break;
+        case 'twin-form': sendToTwin(String(values.get('message'))); break;
+        case 'memory-form': saveMemory(form); break;
       }
     });
 
@@ -1473,6 +1794,11 @@
         getReply(page.id)[field.name] = field.type === 'checkbox' ? field.checked : field.value;
         save();
       } else if (field.form?.id === 'find-form') search.input = field.value;
+      else if (field.form?.id === 'twin-form') { getTwin().input = field.value; save(); }
+    });
+
+    document.addEventListener('change', event => {
+      if (event.target.matches('input[data-upload]')) uploadPhotos(event.target);
     });
 
     window.addEventListener('hashchange', () => {

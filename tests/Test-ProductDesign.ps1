@@ -15,6 +15,8 @@ $requiredItems = @(
     'Follow circle'
     'Ask Maya'
     'Add to story'
+    'My AI'
+    'Review draft'
     '^> Every story has a .+$'
 )
 foreach ($item in $requiredItems) {

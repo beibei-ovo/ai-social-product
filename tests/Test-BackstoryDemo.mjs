@@ -85,7 +85,18 @@ try {
   const submit = selector => evaluate(`${q(selector)}.requestSubmit()`);
   const act = (action, id, scope = '#screen') => click(`${scope} [data-action="${action}"]${id ? `[data-id="${id}"]` : ''}`);
   const nav = action => act(action, null, '#navigation');
-  const selectRole = async role => { await act('demo', null, '#topbar'); await act('switch-role', role, '#dialog'); };
+  const restoreRoute = async route => {
+    await evaluate(`location.hash = ${JSON.stringify(route)}`);
+    await waitFor('page.view === readPage().view && page.id === readPage().id');
+  };
+  const selectRole = async role => {
+    const route = await evaluate('location.hash');
+    await nav('me');
+    await act('demo');
+    await act('switch-role', role, '#dialog');
+    await restoreRoute(route);
+  };
+  const openShare = async () => { await nav('explore'); await act('share', null, '#topbar'); };
   const newQuestionCount = () => evaluate('state.questions.filter(question => !question.sample).length');
   const find = async question => { await change('#find-form input', question); await submit('#find-form'); };
   const ask = async question => {
@@ -105,6 +116,14 @@ try {
     await mkdir(screenshotDir, { recursive: true });
     const result = await cdp('Page.captureScreenshot', { format: 'png' });
     await writeFile(join(screenshotDir, `${name}.png`), Buffer.from(result.data, 'base64'));
+  }
+
+  async function attachFiles(selector, files) {
+    const { root } = await cdp('DOM.getDocument');
+    const { nodeId } = await cdp('DOM.querySelector', { nodeId: root.nodeId, selector });
+    assert.ok(nodeId, `File input exists: ${selector}`);
+    await cdp('DOM.setFileInputFiles', { nodeId, files });
+    await waitFor('imageUploadPending === false');
   }
 
   await cdp('Page.enable');
@@ -222,8 +241,10 @@ try {
   await hasText('what changed after three months?', '#dialog');
   assert.equal(await newQuestionCount(), 0);
   await act('close-dialog', null, '#dialog');
-  await act('demo', null, '#topbar');
+  await nav('me');
+  await act('demo');
   await act('fail-next', null, '#dialog');
+  await restoreRoute('#story=solo');
   await ask('What changed after three months?');
   await hasText('Your question is still here');
   assert.equal(await evaluate('document.querySelector("#ask-form input").value'), 'What changed after three months?');
@@ -307,11 +328,11 @@ try {
   await act('confirm', null, '#dialog');
   await selectRole('alex');
   await nav('inbox');
-  await hasText('Maya · Passed · New');
+  await hasText('Maya · Passed', `[data-id="${declinedId}"]`);
   console.log('PASS AC-10 to AC-12: private/public author replies, decline, and linked experiences');
 
   // AC-04, AC-05, AC-13, and the withdrawal part of AC-01.
-  await nav('share');
+  await openShare();
   await screenshot('backstory-composer');
   await act('record', 'story');
   await hasText('Recording…');
@@ -325,7 +346,7 @@ try {
   await waitFor('Boolean(document.querySelector("#dialog audio"))');
   await act('confirm', null, '#dialog');
   await hasText('Recorded in the demo');
-  await nav('share');
+  await openShare();
   await evaluate(`navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('Denied by test', 'NotAllowedError'); }`);
   await act('record', 'story');
   await hasText('Microphone unavailable');
@@ -351,7 +372,8 @@ try {
   await act('confirm', null, '#dialog');
   await hasText('Story unavailable');
   assert.equal(await evaluate('location.hash'), '#story=solo');
-  await act('demo', null, '#topbar');
+  await nav('me');
+  await act('demo');
   await act('confirm-reset', null, '#dialog');
   await act('confirm', null, '#dialog');
   await hasText('What are you curious about?');
@@ -380,10 +402,109 @@ try {
   await openMayaStory();
   await hasText('Source access was withdrawn', '#discussion .twin');
   assert.equal(await evaluate('Boolean(document.querySelector("#discussion .twin [data-action=play-source]"))'), false);
+
+  // AC-17 and AC-18: a long private chat suggests a draft that only publishes on confirmation.
+  assert.deepEqual(await evaluate('Array.from(document.querySelectorAll("#navigation button"), button => button.textContent.trim())'), ['Explore', 'My AI', 'Inbox', 'Me']);
+  await nav('explore');
+  assert.equal(await evaluate('Boolean(document.querySelector("#topbar [data-action=share]"))'), true);
+  const storyCount = await evaluate('state.stories.length');
+  await nav('my-ai');
+  assert.equal(await evaluate('document.querySelectorAll("#twin-log [data-speaker]").length'), 28);
+  await hasText('Review draft', '#twin-proposal');
+  assert.equal(await evaluate('state.stories.length'), storyCount, 'Suggested draft is private');
+  await screenshot('backstory-my-ai-draft');
+  await act('twin-history', null, '#topbar');
+  assert.equal(await evaluate('document.querySelector("#screen").scrollTop'), 0);
+  await screenshot('backstory-my-ai-history');
+  await act('twin-latest');
+  await act('remember-twin', 'memory-corner');
+  await act('twin-memories', null, '#topbar');
+  await act('edit-memory', 'memory-corner', '#dialog');
+  await change('#memory-form textarea', 'My private memory about coffee in the window corner.');
+  await submit('#memory-form');
+  await hasText('My private memory about coffee in the window corner.', '#dialog');
+  await act('forget-memory', 'memory-corner', '#dialog');
+  assert.equal(await evaluate('document.querySelector("#dialog").textContent.includes("My private memory")'), false);
+  await act('close-dialog', null, '#dialog');
+  await change('#twin-form input[name="message"]', 'A private note I only want to keep in this chat.');
+  await submit('#twin-form');
+  await selectRole('maya');
+  assert.equal(await evaluate('document.querySelector("#twin-log").textContent.includes("A private note I only want")'), false);
+  await selectRole('alex');
+  await hasText('A private note I only want to keep in this chat.');
+  await act('save-twin-draft');
+  await hasText('Saved for later', '#twin-proposal');
+  await cdp('Page.reload');
+  await hasText('Saved for later', '#twin-proposal');
+  assert.equal(await evaluate('document.querySelectorAll("#twin-log [data-speaker]").length'), 30);
+  await act('review-twin-draft');
+  await hasText('Drafted with your AI');
+  await change('#share-form input[name="title"]', 'My window corner finally felt like home.');
+  assert.equal(await evaluate('state.stories.length'), storyCount);
+
+  // AC-19: real file uploads survive draft editing and publish only selected images.
+  const photoData = await evaluate(`(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 40;
+    canvas.height = 30;
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#e8d4b1';
+    context.fillRect(0, 0, 40, 30);
+    return canvas.toDataURL('image/png');
+  })()`);
+  const testPhoto = join(profile, 'window-photo.png');
+  await writeFile(testPhoto, Buffer.from(photoData.split(',')[1], 'base64'));
+  await act('remove-photo', 'story:0');
+  await attachFiles('#share-form input[data-upload=story]', [testPhoto]);
+  assert.equal(await evaluate('getDraft().images.length'), 1);
+  await screenshot('backstory-my-ai-review');
+  await submit('#share-form');
+  await waitFor('Boolean(document.querySelector("#dialog img"))');
+  assert.equal(await evaluate('document.querySelectorAll("#dialog input:checked").length'), 0);
+  await act('close-dialog', null, '#dialog');
+  assert.equal(await evaluate('state.stories.length'), storyCount, 'Closing preview keeps draft private');
+  await submit('#share-form');
+  await act('confirm', null, '#dialog');
+  await hasText('My window corner finally felt like home.');
+  const publishedTwinStory = await evaluate('page.id');
+  assert.equal(await evaluate('getStory(page.id).images.length'), 1);
+  assert.equal(await evaluate('getStory(page.id).sources.every(source => source.enabled === false)'), true);
+  assert.equal(await evaluate('document.querySelector("#screen").textContent.includes("little escape hatch")'), false);
+  await screenshot('backstory-my-ai-published');
+  await nav('my-ai');
+  await hasText('View your post', '#twin-proposal');
+  assert.equal(await evaluate('getTwin().proposal.status'), 'published');
+  await act('open-story', publishedTwinStory, '#twin-proposal');
+  assert.equal(await evaluate('state.stories.length'), storyCount + 1, 'Opening a published draft cannot duplicate it');
+  await selectRole('guest');
+  await ask('What is your little escape hatch?');
+  await hasText('doesn’t cover this question yet', '#story-messages');
+  await nav('my-ai');
+  await hasText('You’re viewing as a guest');
+  await selectRole('alex');
+  await attachFiles('#twin-form input[data-upload=twin]', [testPhoto]);
+  await change('#twin-form input[name="message"]', 'I took another photo of the corner after the afternoon light changed.');
+  await submit('#twin-form');
+  assert.equal(await evaluate('getTwin().messages.filter(message => message.kind === "user").at(-1).images.length'), 1);
+  assert.equal(await evaluate('getTwin().proposal.status'), 'published', 'Explicitly private messages are excluded from future draft candidates');
+  await selectRole('maya');
+  assert.equal(await evaluate('document.querySelector("#twin-log").textContent.includes("afternoon light changed")'), false);
+  await selectRole('alex');
+  await openShare();
+  await attachFiles('#share-form input[data-upload=story]', [testPhoto, testPhoto, testPhoto, testPhoto]);
+  assert.equal(await evaluate('getDraft().images.length'), 4);
+  await attachFiles('#share-form input[data-upload=story]', [testPhoto]);
+  await hasText('Choose up to four photos', '#toast');
+  assert.equal(await evaluate('getDraft().images.length'), 4);
+  await act('remove-photo', 'story:0');
+  assert.equal(await evaluate('getDraft().images.length'), 3);
+  await cdp('Page.reload');
+  await waitFor('document.querySelectorAll("#share-form .photo-edit").length === 3');
   assert.deepEqual(runtimeErrors, [], 'No uncaught browser errors');
   console.log('PASS AC-04, AC-05, AC-13: recording and fallback, revocation, withdrawal, and reset');
   console.log('PASS AC-14 and AC-15: public roles, nested comments, revoked quotes, and previous demo data');
-  console.log('All 16 Backstory demo acceptance cases passed.');
+  console.log('PASS AC-17 to AC-19: private twin history, memory control, reviewed draft publishing, and photo uploads');
+  console.log('All 19 Backstory demo acceptance cases passed.');
 } finally {
   socket?.close();
   browser.kill();
