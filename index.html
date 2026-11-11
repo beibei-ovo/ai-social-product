@@ -387,6 +387,26 @@
 
     const starterPrompt = 'I’m too tired for ranked games after work, but I still want to play with friends.';
     const starterReply = 'Three months in, coming home felt different. I started looking forward to making dinner on my own, and a short Sunday call with a friend gave the week a familiar rhythm.';
+    const sampleQuestions = [
+      { id: 'sample-train', storyId: 'wrong-train', asker: 'alex', author: 'ben',
+        question: 'What helped you feel okay about getting off at an unfamiliar stop?', status: 'pending', unread: [] },
+      { id: 'sample-job', storyId: 'first-job', asker: 'ben', author: 'alex',
+        question: 'Did you bring up the example again at your next check-in?', status: 'answered', unread: [],
+        reply: { text: 'I did. I brought my next draft and pointed out the one thing I’d changed after seeing her example. That gave us a much more specific conversation.' },
+        followups: [{ author: 'ben', text: 'That’s a good idea. I can bring a before-and-after next time.' }] },
+      { id: 'sample-drawing', storyId: 'drawing', asker: 'jordan', author: 'maya',
+        question: 'Did you keep the first sketch or throw it out?', status: 'pending', unread: ['maya'] },
+      { id: 'sample-dinner', storyId: 'solo-table', asker: 'maya', author: 'iris',
+        question: 'Did you still bring your book the next time?', status: 'answered', unread: [],
+        reply: { text: 'Yes, but I left it in my bag. Having it there made me feel like I had a choice about how I spent the evening.' } },
+      { id: 'sample-house', storyId: 'house-meeting', asker: 'iris', author: 'jordan',
+        question: 'Would you share the notes from that meeting?', status: 'declined', unread: [] },
+      { id: 'sample-co-op', storyId: 'co-op', asker: 'nia', author: 'alex',
+        question: 'How did you make thirty minutes feel like enough?', status: 'pending', unread: ['alex'] },
+      { id: 'sample-sunday', storyId: 'solo', asker: 'alex', author: 'maya',
+        question: 'What did you do on Sundays when the apartment felt too quiet?', status: 'answered', unread: ['alex'],
+        reply: { text: 'I’d make coffee and call my sister before I made any plans. It gave the morning a starting point, even if the rest of the day was open.' } }
+    ];
     const storageKey = 'backstory-demo-v2';
     const legacyStorageKey = 'backstory-demo-v1';
     const stopWords = new Set('about after again are can could did do does for from had has have how into is it later me more my of on or say she that the then this was were what when which who why will with would you your'.split(' '));
@@ -399,7 +419,8 @@
 
     function freshState(role = 'alex') {
       const follows = Object.fromEntries(Object.keys(people).filter(id => id !== 'guest').map(id => [id, []]));
-      return { role, stories: structuredClone(seeds), follows, questions: [], chats: {}, drafts: {}, replies: {}, comments: [] };
+      const questions = structuredClone(sampleQuestions).map(question => ({ ...question, sample: true }));
+      return { role, stories: structuredClone(seeds), follows, questions, chats: {}, drafts: {}, replies: {}, comments: [] };
     }
 
     function readState() {
@@ -408,9 +429,13 @@
         if (saved && people[saved.role] && Array.isArray(saved.stories) && saved.follows && saved.chats && saved.drafts && saved.replies) {
           const defaults = freshState(saved.role);
           const knownStories = new Set(saved.stories.map(story => story.id));
+          const withdrawn = new Set(saved.stories.filter(story => story.withdrawn).map(story => story.id));
+          const existingQuestions = saved.questions || [];
+          const knownQuestions = new Set(existingQuestions.map(question => question.id));
           return {
             ...defaults, ...saved,
             stories: [...saved.stories, ...defaults.stories.filter(story => !knownStories.has(story.id))],
+            questions: [...defaults.questions.filter(question => !knownQuestions.has(question.id) && !withdrawn.has(question.storyId)), ...existingQuestions],
             follows: { ...defaults.follows, ...saved.follows }
           };
         }
@@ -861,17 +886,20 @@
       const outgoing = state.questions.filter(item => item.asker === state.role).slice().reverse();
       const section = (items, title, empty) => `<section class="section"><div class="section-head"><h2>${title}</h2></div><div class="row-list">
         ${items.length ? items.map(renderInboxItem).join('') : `<div class="empty">${empty}</div>`}</div></section>`;
-      return `<div class="page"><div class="eyebrow">Your conversations</div><h1 class="page-title">Inbox</h1><p class="subtle">Follow-ups between you and another person.</p>
+      return `<div class="page"><div class="eyebrow">Private conversations</div><h1 class="page-title">Inbox</h1><p class="subtle">Questions people sent you and replies to questions you asked.</p>
+        ${[...incoming, ...outgoing].some(item => item.sample) ? '<p class="subtle space">Open a sample conversation to see how a private reply works.</p>' : ''}
         ${section(incoming, 'Questions for you', 'Questions from your stories will land here.')}
         ${section(outgoing, 'Questions you asked', 'Ask an author for a detail to start a conversation.')}
       </div>`;
     }
 
     function renderInboxItem(item) {
-      const other = item.author === state.role ? item.asker : item.author;
-      const badge = item.status === 'answered' ? 'Replied' : item.status === 'declined' ? 'Passed' : 'Waiting';
+      const incoming = item.author === state.role;
+      const other = incoming ? item.asker : item.author;
+      const story = getStory(item.storyId);
+      const badge = item.status === 'answered' ? 'Replied' : item.status === 'declined' ? 'Passed' : incoming ? 'Needs reply' : 'Waiting';
       return `<button class="row-button" data-action="open-thread" data-id="${escape(item.id)}">
-        ${avatar(other)}<span class="row-copy"><strong>${escape(item.question)}</strong><span class="subtle">${people[other].first} · ${badge}${item.unread.includes(state.role) ? ' · New' : ''}</span></span>${icon('right', 15)}
+        ${avatar(other)}<span class="row-copy"><strong>${escape(item.question)}</strong><span class="post-meta"><span>${people[other].first} · ${badge}${item.unread.includes(state.role) ? ' · New' : ''}</span>${item.sample ? '<span class="pill">Sample</span>' : ''}</span>${story ? `<span class="subtle">On ${escape(story.title)}</span>` : ''}</span>${icon('right', 15)}
       </button>`;
     }
 
@@ -881,10 +909,11 @@
       const author = state.role === item.author;
       const story = getStory(item.storyId);
       const name = people[item.author].first;
-      return `<div class="page"><div class="eyebrow">${icon('lock', 13)} Private follow-up</div>
+      const status = item.status === 'answered' ? `${name} replied` : item.status === 'declined' ? 'Author passed' : author ? 'Needs your reply' : `Waiting for ${name}`;
+      return `<div class="page"><div class="button-row"><div class="eyebrow">${icon('lock', 13)} Private follow-up</div>${item.sample ? '<span class="pill">Sample conversation</span>' : ''}</div>
         <h1 class="page-title">${escape(item.question)}</h1>
         ${story ? action('open-story', escape(story.title), story.id, 'text-button') : '<p class="subtle">The public story was withdrawn.</p>'}
-        <div class="space"><span class="pill ${item.status === 'answered' ? 'human' : 'pending'}">${item.status === 'answered' ? `${name} replied` : item.status === 'declined' ? 'Author passed' : `Waiting for ${name}`}</span></div>
+        <div class="space"><span class="pill ${item.status === 'answered' ? 'human' : 'pending'}">${status}</span></div>
         ${item.status === 'answered' ? renderReply(item) : ''}
         ${item.status === 'pending' && author ? renderReplyForm(item, story) : ''}
         ${item.status === 'pending' && !author ? `<div class="panel space"><p class="subtle">Your question is with ${name}. Their reply will appear here.</p><div class="space">${action('switch-inbox', `Demo: switch to ${name}`, item.author)}</div></div>` : ''}
@@ -930,7 +959,8 @@
             return `<div class="panel"><div class="section-head"><h2>${escape(circle.title)}</h2>${action('follow', 'Unfollow', id, 'text-button')}</div>${action('circle', 'View circle', id, 'text-button')}</div>`;
           }).join('')}</div>` : '<div class="empty">Follow a circle to find it here again.</div>'}
         </section>
-        <section class="section"><div class="section-head"><h2>Your stories</h2></div>
+        <section class="section"><div class="section-head"><h2>Your stories</h2><span class="kind human">Public posts</span></div>
+          <p class="subtle" style="margin-bottom: 9px">Stories you’ve published in circles. Open one to see the discussion or manage what your AI twin can quote.</p>
           ${stories.length ? `<div class="row-list">${stories.map(story => `<div class="panel"><h2>${escape(story.title)}</h2><div class="button-row">${action('open-story', 'Open story', story.id)}${action('manage', 'Manage sources', story.id)}</div></div>`).join('')}</div>` : '<div class="empty">Your published stories will appear here.</div>'}
         </section>
       </div>`;

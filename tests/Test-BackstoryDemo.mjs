@@ -86,6 +86,7 @@ try {
   const act = (action, id, scope = '#screen') => click(`${scope} [data-action="${action}"]${id ? `[data-id="${id}"]` : ''}`);
   const nav = action => act(action, null, '#navigation');
   const selectRole = async role => { await act('demo', null, '#topbar'); await act('switch-role', role, '#dialog'); };
+  const newQuestionCount = () => evaluate('state.questions.filter(question => !question.sample).length');
   const find = async question => { await change('#find-form input', question); await submit('#find-form'); };
   const ask = async question => {
     if (!(await evaluate('Boolean(document.querySelector("#ask-form"))'))) await act('story-tab', 'ask');
@@ -118,6 +119,41 @@ try {
   await cdp('Emulation.setTouchEmulationEnabled', { enabled: true });
   assert.equal(await evaluate('document.documentElement.scrollWidth'), 390, 'Phone layout has no horizontal overflow');
   await screenshot('backstory-mobile');
+
+  // AC-16: Inbox examples are private, usable conversations with distinct states.
+  await nav('me');
+  await hasText('Public posts');
+  assert.equal(await evaluate('Boolean(document.querySelector("#screen [data-id=sample-sunday]"))'), false);
+  await nav('inbox');
+  await hasText('Questions people sent you and replies to questions you asked.');
+  await hasText('Questions for you');
+  await hasText('Questions you asked');
+  await hasText('Nia · Needs reply · New', '[data-id=sample-co-op]');
+  await hasText('Maya · Replied · New', '[data-id=sample-sunday]');
+  await hasText('Ben · Waiting', '[data-id=sample-train]');
+  await screenshot('backstory-inbox');
+  await act('open-thread', 'sample-sunday');
+  await hasText('Sample conversation');
+  await hasText('Maya replied');
+  await hasText('call my sister');
+  await nav('inbox');
+  await act('open-thread', 'sample-co-op');
+  await hasText('Needs your reply');
+  const sampleResponse = 'We picked one short session and left the voice channel open afterward.';
+  await change('#reply-form textarea', sampleResponse);
+  await submit('#reply-form');
+  await act('confirm', null, '#dialog');
+  await hasText('Alex replied');
+  await selectRole('nia');
+  await hasText(sampleResponse);
+  await cdp('Page.reload');
+  await hasText(sampleResponse);
+  await selectRole('guest');
+  await evaluate('location.hash = "#thread=sample-co-op"');
+  await hasText('Conversation unavailable');
+  await selectRole('alex');
+  await nav('explore');
+  console.log('PASS AC-16: public posts vs private inbox, sample states, reply, reload, and privacy');
 
   // AC-01 to AC-03: all topics, cross-circle matching, manual follow, and fallback states.
   for (const topic of ['gaming', 'life', 'travel', 'work', 'hobbies', 'relationships']) {
@@ -184,21 +220,21 @@ try {
   await hasText('doesn’t cover the rest');
   await act('confirm-ask', null, '#story-messages .message:last-child');
   await hasText('what changed after three months?', '#dialog');
-  assert.equal(await evaluate('state.questions.length'), 0);
+  assert.equal(await newQuestionCount(), 0);
   await act('close-dialog', null, '#dialog');
   await act('demo', null, '#topbar');
   await act('fail-next', null, '#dialog');
   await ask('What changed after three months?');
   await hasText('Your question is still here');
   assert.equal(await evaluate('document.querySelector("#ask-form input").value'), 'What changed after three months?');
-  assert.equal(await evaluate('state.questions.length'), 0);
+  assert.equal(await newQuestionCount(), 0);
   await submit('#ask-form');
   await sendLatestQuestion();
   const privateId = await evaluate('page.id');
   await act('open-story', 'solo');
   await ask('What changed after three months?');
   await sendLatestQuestion();
-  assert.equal(await evaluate('state.questions.length'), 1);
+  assert.equal(await newQuestionCount(), 1);
   await selectRole('guest');
   await evaluate(`location.hash = ${JSON.stringify(`#thread=${privateId}`)}`);
   await hasText('Conversation unavailable');
@@ -222,7 +258,7 @@ try {
   assert.equal(await evaluate('document.querySelector("#screen").innerText.includes("familiar rhythm")'), false);
   await selectRole('alex');
   await nav('inbox');
-  await hasText('Maya · Replied · New');
+  await hasText('Maya · Replied · New', `[data-id="${privateId}"]`);
   await act('open-thread', privateId);
   await hasText('Maya replied');
   await change('#followup-form input', 'Thanks. I just moved too.');
@@ -319,7 +355,8 @@ try {
   await act('confirm-reset', null, '#dialog');
   await act('confirm', null, '#dialog');
   await hasText('What are you curious about?');
-  assert.deepEqual(await evaluate('[state.role, state.questions.length, state.stories.length, state.comments.length]'), ['alex', 0, 18, 0]);
+  assert.deepEqual(await evaluate('[state.role, state.questions.length, state.stories.length, state.comments.length]'), ['alex', 7, 18, 0]);
+  assert.equal(await evaluate('getQuestion("sample-co-op").status'), 'pending');
 
   // AC-14 and AC-15: original demo state receives new content without losing old permissions.
   await evaluate(`{
@@ -328,6 +365,7 @@ try {
     old.stories[0].sources[1].enabled = false;
     old.stories.find(story => story.id === 'first-job').withdrawn = true;
     old.follows = { alex: ['gaming'], maya: [] };
+    old.questions = [{ id: 'legacy-question', storyId: 'first-job', asker: 'maya', author: 'alex', question: 'My saved question', status: 'pending', unread: [] }];
     delete old.comments;
     localStorage.setItem(legacyStorageKey, JSON.stringify(old));
     localStorage.removeItem(storageKey);
@@ -336,13 +374,16 @@ try {
   await hasText('Your circles');
   assert.equal(await evaluate('state.stories.length'), 18);
   assert.equal(await evaluate('Boolean(getStory("first-job"))'), false);
+  assert.equal(await evaluate('Boolean(getQuestion("sample-job"))'), false, 'Migration respects withdrawn stories');
+  assert.equal(await evaluate('getQuestion("legacy-question").question'), 'My saved question');
+  assert.equal(await evaluate('getQuestion("sample-sunday").status'), 'answered');
   await openMayaStory();
   await hasText('Source access was withdrawn', '#discussion .twin');
   assert.equal(await evaluate('Boolean(document.querySelector("#discussion .twin [data-action=play-source]"))'), false);
   assert.deepEqual(runtimeErrors, [], 'No uncaught browser errors');
   console.log('PASS AC-04, AC-05, AC-13: recording and fallback, revocation, withdrawal, and reset');
   console.log('PASS AC-14 and AC-15: public roles, nested comments, revoked quotes, and previous demo data');
-  console.log('All 15 Backstory demo acceptance cases passed.');
+  console.log('All 16 Backstory demo acceptance cases passed.');
 } finally {
   socket?.close();
   browser.kill();
